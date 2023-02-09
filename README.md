@@ -9,3 +9,6 @@ The keys are:
 *  'y' = Yellow
 *  'w' = White
 *  'k' = Black
+
+# Requirements  
+* pygame
