@@ -250,6 +250,7 @@ def main():
                     time.sleep(1)
                     board.initialize_board(WIN)
                     board.selected_tile = board.board[0][0]
+                    board.update_selected(WIN, board.selected_tile, board.selected_tile)
                     pygame.display.update()
                 
                 # If a valid move is made, swap which players turn it is
