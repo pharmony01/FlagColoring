@@ -95,6 +95,7 @@ def find_unique_colors(connected_tiles, board: Board):
 
 # Allows the player to make their move
 def get_key_press(unique_colors, connected_tiles, key, board):
+    # A set containing all viable colors
     choices = set()
     # Make sure that the key press corresponds to a valid
     # Color available
@@ -153,6 +154,7 @@ def main():
                 # Exit the game
                 run = False
                 
+            # Chooses the selected tile and evaluates neighbors
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse(pos)
@@ -160,6 +162,7 @@ def main():
                 connected_tiles = find_connected(board.selected_tile,  board)
                 unique_colors = find_unique_colors(connected_tiles, board)
 
+            # If a key is pressed, and a tile is selected a viable move is assessed
             if event.type == pygame.KEYDOWN:
                 key_press, valid_move = get_key_press(unique_colors, connected_tiles, chr(event.key), board)
                 if valid_move:
