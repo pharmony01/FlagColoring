@@ -94,11 +94,23 @@ def find_unique_colors(connected_tiles, board: Board):
     return unique_colors
 
 # Allows the player to make their move
-def get_key_press(unique_colors, connected_tiles, key, board):
-    if key > 200:
-        return '_', False
+def get_key_press(key):
+    if key > 1000:
+        if key == 1072741906:
+            return 'up_arrow'
+        elif key == 1072741904:
+            return 'left_arrow'
+        elif key == 1072741905:
+            return 'down_arrow'
+        elif key == 1073741903:
+            return 'right_arrow'
+        else:
+            return '_'
     else:
-        key = chr(key)
+        return chr(key)
+    
+
+def is_valid_move(unique_colors, key):
     # A set containing all viable colors
     choices = set()
     # Make sure that the key press corresponds to a valid
@@ -118,10 +130,9 @@ def get_key_press(unique_colors, connected_tiles, key, board):
             choices.add('w')
     # Return the key, and True if a valid move was made, else False
     if key in choices:
-        return key, True
+        return True
     else:
-        return '_', False
-
+        return False
 
 # Check if someone has won the game        
 def is_winner(board: Board):
@@ -172,7 +183,9 @@ def main():
 
             # If a key is pressed, and a tile is selected a viable move is assessed
             if event.type == pygame.KEYDOWN:
-                key_press, valid_move = get_key_press(unique_colors, connected_tiles, event.key, board)
+                key_press = get_key_press(event.key)
+                valid_move = is_valid_move(unique_colors, key_press)
+                
                 if valid_move:
                     board.update_board(WIN, connected_tiles, key_press)
                     pygame.display.update()
