@@ -24,17 +24,17 @@ class Board:
     # Update the new colors of the board based on the input   
     def update_board(self, win, connected_tiles, new_color):
         color = (-1, -1, -1)
-        if new_color == 'r':
+        if new_color == pygame.K_r:
             color = (255, 0, 0)
-        elif new_color == 'g':
+        elif new_color == pygame.K_g:
             color = (0, 255, 0)
-        elif new_color == 'b':
+        elif new_color == pygame.K_b:
             color = (0, 0, 255)
-        elif new_color == 'y':
+        elif new_color == pygame.K_y:
             color = (255, 255, 0)
-        elif new_color == 'k':
+        elif new_color == pygame.K_k:
             color = (0, 0, 0)
-        else:
+        elif new_color == pygame.K_w:
             color = (255, 255, 255)
 
         for elem in connected_tiles:

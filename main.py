@@ -93,25 +93,21 @@ def find_unique_colors(connected_tiles, board: Board):
             if checked_color != selected_color:
                 unique_colors.add(checked_color)
     return unique_colors
-
-# Allows the player to make their move
-def get_key_press(key):
-    if key > 1000:
-        if key == 1073741906:
-            return 'up_arrow'
-        elif key == 1073741904:
-            return 'left_arrow'
-        elif key == 1073741905:
-            return 'down_arrow'
-        elif key == 1073741903:
-            return 'right_arrow'
-        else:
-            return '_'
-    else:
-        return chr(key)
     
-
-def is_valid_move(unique_colors, key):
+def is_valid_move(unique_colors, key_press):
+    key = ''
+    if key_press == pygame.K_r:
+        key = 'r'
+    elif key_press == pygame.K_g:
+        key = 'g'
+    elif key_press == pygame.K_b:
+        key = 'b'
+    elif key_press == pygame.K_y:
+        key = 'y'
+    elif key_press == pygame.K_w:
+        key = 'w'
+    elif key_press == pygame.K_k:
+        key = 'k'
     # A set containing all viable colors
     choices = set()
     # Make sure that the key press corresponds to a valid
@@ -127,7 +123,7 @@ def is_valid_move(unique_colors, key):
             choices.add('y')
         elif elem == (0, 0, 0):
             choices.add('k')
-        else:
+        elif elem == (255, 255, 255):
             choices.add('w')
     # Return the key, and True if a valid move was made, else False
     if key in choices:
@@ -148,13 +144,13 @@ def is_winner(board: Board):
 def move_selected(key_press, board: Board):
     value = []
     # Extract the direction you need to move
-    if key_press == 'up_arrow':
+    if key_press == pygame.K_UP:
         value = [-1, 0]
-    elif key_press == 'left_arrow':
+    elif key_press == pygame.K_LEFT:
         value = [0, -1]
-    elif key_press == 'down_arrow':
+    elif key_press == pygame.K_DOWN:
         value = [1, 0]
-    elif key_press == 'right_arrow':
+    elif key_press == pygame.K_RIGHT:
         value = [0, 1]
     
     # Grab the values from the selected tile
@@ -184,6 +180,7 @@ def main():
     connected_tiles = set()
     unique_colors = set()
     valid_move = False
+    board.selected_tile = board.board[0][0]
     
     # Main game loop
     run = True
@@ -199,28 +196,28 @@ def main():
                 run = False
                 
             # Chooses the selected tile and evaluates neighbors
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse(pos)
                 board.selected_tile = board.board[row][col]
-                connected_tiles = find_connected(board.selected_tile,  board)
+                connected_tiles = find_connected(board.selected_tile, board)
                 unique_colors = find_unique_colors(connected_tiles, board)
 
             # If a key is pressed, and a tile is selected a viable move is assessed
-            if event.type == pygame.KEYDOWN:
-                key_press = get_key_press(event.key)
-                if key_press[-6:] == '_arrow':
+            elif event.type == pygame.KEYDOWN:
+                key_press = event.key
+                if key_press == pygame.K_UP or key_press == pygame.K_DOWN or key_press == pygame.K_LEFT or key_press == pygame.K_RIGHT: 
                     row, col = move_selected(key_press, board)
                     board.selected_tile = board.board[row][col]
+                    connected_tiles = find_connected(board.selected_tile, board)
+                    unique_colors = find_unique_colors(connected_tiles, board)
                 else:
                     valid_move = is_valid_move(unique_colors, key_press)
-                
-                
-                
                 
                 if valid_move:
                     board.update_board(WIN, connected_tiles, key_press)
                     pygame.display.update()
+                    valid_move = False
                 
                 # Check for a winner
                 winner = is_winner(board)
