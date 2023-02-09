@@ -95,6 +95,10 @@ def find_unique_colors(connected_tiles, board: Board):
 
 # Allows the player to make their move
 def get_key_press(unique_colors, connected_tiles, key, board):
+    if key > 200:
+        return '_', False
+    else:
+        key = chr(key)
     # A set containing all viable colors
     choices = set()
     # Make sure that the key press corresponds to a valid
@@ -140,6 +144,10 @@ def main():
     
     # Create a clock so the board runs at a constant FPS
     clock = pygame.time.Clock()
+
+    # Initialize variables
+    connected_tiles = set()
+    unique_colors = set()
     
     # Main game loop
     run = True
@@ -164,7 +172,7 @@ def main():
 
             # If a key is pressed, and a tile is selected a viable move is assessed
             if event.type == pygame.KEYDOWN:
-                key_press, valid_move = get_key_press(unique_colors, connected_tiles, chr(event.key), board)
+                key_press, valid_move = get_key_press(unique_colors, connected_tiles, event.key, board)
                 if valid_move:
                     board.update_board(WIN, connected_tiles, key_press)
                     pygame.display.update()
