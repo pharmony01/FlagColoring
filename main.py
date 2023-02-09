@@ -1,5 +1,6 @@
 import pygame
 import time
+import pdb
 from queue import LifoQueue
 from flag_coloring.constants import *
 from flag_coloring.board import Board
@@ -96,11 +97,11 @@ def find_unique_colors(connected_tiles, board: Board):
 # Allows the player to make their move
 def get_key_press(key):
     if key > 1000:
-        if key == 1072741906:
+        if key == 1073741906:
             return 'up_arrow'
-        elif key == 1072741904:
+        elif key == 1073741904:
             return 'left_arrow'
-        elif key == 1072741905:
+        elif key == 1073741905:
             return 'down_arrow'
         elif key == 1073741903:
             return 'right_arrow'
@@ -144,6 +145,29 @@ def is_winner(board: Board):
     # If only one color is in the set, return True
     return len(board_colors) == 1
 
+def move_selected(key_press, board: Board):
+    value = []
+    # Extract the direction you need to move
+    if key_press == 'up_arrow':
+        value = [-1, 0]
+    elif key_press == 'left_arrow':
+        value = [0, -1]
+    elif key_press == 'down_arrow':
+        value = [1, 0]
+    elif key_press == 'right_arrow':
+        value = [0, 1]
+    
+    # Grab the values from the selected tile
+    row, col = board.selected_tile.row, board.selected_tile.col
+    # Adjust the row, col to the new one
+    row += value[0]
+    col += value[1]
+    # Check if the position is valid
+    if row >= 0 and row < ROWS and col >= 0 and col < COLS:
+        return row, col
+    else:
+        return board.selected_tile.row, board.selected_tile.col
+
 def main():
     # For end stats
     player_1_wins = 0
@@ -159,6 +183,7 @@ def main():
     # Initialize variables
     connected_tiles = set()
     unique_colors = set()
+    valid_move = False
     
     # Main game loop
     run = True
@@ -184,7 +209,14 @@ def main():
             # If a key is pressed, and a tile is selected a viable move is assessed
             if event.type == pygame.KEYDOWN:
                 key_press = get_key_press(event.key)
-                valid_move = is_valid_move(unique_colors, key_press)
+                if key_press[-6:] == '_arrow':
+                    row, col = move_selected(key_press, board)
+                    board.selected_tile = board.board[row][col]
+                else:
+                    valid_move = is_valid_move(unique_colors, key_press)
+                
+                
+                
                 
                 if valid_move:
                     board.update_board(WIN, connected_tiles, key_press)
