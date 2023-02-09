@@ -180,6 +180,7 @@ def main():
     # Initialize variables
     valid_move = False
     board.selected_tile = board.board[0][0]
+    board.update_selected(WIN, board.selected_tile, board.selected_tile)
     connected_tiles = find_connected(board.selected_tile, board)
     unique_colors = find_unique_colors(connected_tiles, board)
     pygame.display.update()
@@ -227,7 +228,7 @@ def main():
                     old_selected = board.selected_tile
                     board.update_selected(WIN, old_selected, board.selected_tile)
                     pygame.display.update()
-                    valid_move = False
+                    
                 
                 # Check for a winner
                 winner = is_winner(board)
@@ -240,15 +241,18 @@ def main():
                     # Recreate the board after someone wins
                     time.sleep(1)
                     board.initialize_board(WIN)
+                    board.selected_tile = board.board[0][0]
                     pygame.display.update()
                 
                 # If a valid move is made, swap which players turn it is
                 if player_1 and valid_move:
                     pygame.display.set_caption('Flag Coloring - Player 2s Turn')
                     player_1 = False
+                    valid_move = False
                 elif not player_1 and valid_move:
                     pygame.display.set_caption('Flag Coloring - Player 1s Turn')
                     player_1 = True
+                    valid_move = False
     
     # Print the stats for the games
     print(f"There were {player_1_wins + player_2_wins} game(s) played\nPlayer 1 Won {player_1_wins} game(s)\nPlayer 2 Won {player_2_wins} game(s)")
