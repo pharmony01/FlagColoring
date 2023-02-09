@@ -1,5 +1,5 @@
 import pygame
-import pdb
+import time
 from queue import LifoQueue
 from flag_coloring.constants import *
 from flag_coloring.board import Board
@@ -186,6 +186,7 @@ def main():
                     else:
                         player_2_wins += 1
                     # Recreate the board after someone wins
+                    time.sleep(1)
                     board.initialize_board(WIN)
                     pygame.display.update()
                 

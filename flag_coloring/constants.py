@@ -1,7 +1,7 @@
 import pygame
 
 # Board and square size
-ROWS, COLS = 4, 6
+ROWS, COLS = 3, 3
 WIDTH, HEIGHT = COLS*120, ROWS*120
 SQUARE_SIZE = WIDTH//COLS
 
