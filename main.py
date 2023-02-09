@@ -171,16 +171,18 @@ def main():
     # Create and initialize the board
     board = Board()
     board.initialize_board(WIN)
-    pygame.display.update()
+    
+    
     
     # Create a clock so the board runs at a constant FPS
     clock = pygame.time.Clock()
 
     # Initialize variables
-    connected_tiles = set()
-    unique_colors = set()
     valid_move = False
     board.selected_tile = board.board[0][0]
+    connected_tiles = find_connected(board.selected_tile, board)
+    unique_colors = find_unique_colors(connected_tiles, board)
+    pygame.display.update()
     
     # Main game loop
     run = True
@@ -199,7 +201,10 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse(pos)
+                old_selected = board.selected_tile
                 board.selected_tile = board.board[row][col]
+                board.update_selected(WIN, old_selected, board.selected_tile)
+                pygame.display.update()
                 connected_tiles = find_connected(board.selected_tile, board)
                 unique_colors = find_unique_colors(connected_tiles, board)
 
@@ -208,7 +213,10 @@ def main():
                 key_press = event.key
                 if key_press == pygame.K_UP or key_press == pygame.K_DOWN or key_press == pygame.K_LEFT or key_press == pygame.K_RIGHT: 
                     row, col = move_selected(key_press, board)
+                    old_selected = board.selected_tile
                     board.selected_tile = board.board[row][col]
+                    board.update_selected(WIN, old_selected, board.selected_tile)
+                    pygame.display.update()
                     connected_tiles = find_connected(board.selected_tile, board)
                     unique_colors = find_unique_colors(connected_tiles, board)
                 else:
@@ -216,6 +224,8 @@ def main():
                 
                 if valid_move:
                     board.update_board(WIN, connected_tiles, key_press)
+                    old_selected = board.selected_tile
+                    board.update_selected(WIN, old_selected, board.selected_tile)
                     pygame.display.update()
                     valid_move = False
                 

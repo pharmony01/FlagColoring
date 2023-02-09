@@ -40,3 +40,12 @@ class Board:
         for elem in connected_tiles:
             elem.color = color
             pygame.draw.rect(win, color, (elem.col * SQUARE_SIZE, elem.row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+
+    # Draws the circle to indicate the selected square
+    def update_selected(self, win, old_selected, new_selected_tile):
+        pygame.draw.rect(win, old_selected.color, (old_selected.col * SQUARE_SIZE, old_selected.row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+        y = SQUARE_SIZE * new_selected_tile.row + SQUARE_SIZE // 2
+        x = SQUARE_SIZE * new_selected_tile.col + SQUARE_SIZE // 2
+        radius = SQUARE_SIZE // 2 - 50
+        pygame.draw.circle(win, (139, 45, 251), (x, y), radius + 2)
+        pygame.draw.circle(win, (139, 45, 135), (x, y), radius)
