@@ -94,46 +94,38 @@ def find_unique_colors(connected_tiles, board: Board):
     return unique_colors
 
 # Allows the player to make their move
-def get_key_press(unique_colors, connected_tiles, board):
-    pygame.event.clear()
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                # This weird return is to avoid getting stuck
-                # If you try to exit during this phase
-                return 'END_GAME', True
-            # A check for a key press
-            if event.type == pygame.KEYDOWN:
-                key = chr(event.key)
-                choices = set()
-                
-                # Make sure that the key press corresponds to a valid
-                # Color available
-                for elem in unique_colors:
-                    if elem == (255, 0, 0):
-                        choices.add('r')
-                    elif elem == (0, 255, 0):
-                        choices.add('g')
-                    elif elem == (0, 0, 255):
-                        choices.add('b')
-                    elif elem == (255, 255, 0):
-                        choices.add('y')
-                    elif elem == (0, 0, 0):
-                        choices.add('k')
-                    else:
-                        choices.add('w')
-                # Return the key, and True if a valid move was made, else False
-                if key in choices:
-                    return key, True
-                else:
-                    return '_', False
+def get_key_press(unique_colors, connected_tiles, key, board):
+    choices = set()
+    # Make sure that the key press corresponds to a valid
+    # Color available
+    for elem in unique_colors:
+        if elem == (255, 0, 0):
+            choices.add('r')
+        elif elem == (0, 255, 0):
+            choices.add('g')
+        elif elem == (0, 0, 255):
+            choices.add('b')
+        elif elem == (255, 255, 0):
+            choices.add('y')
+        elif elem == (0, 0, 0):
+            choices.add('k')
+        else:
+            choices.add('w')
+    # Return the key, and True if a valid move was made, else False
+    if key in choices:
+        return key, True
+    else:
+        return '_', False
 
-             
+
+# Check if someone has won the game        
 def is_winner(board: Board):
+    # Add all colors on the board into a set
     board_colors = set()
     for elem in board.board:
         for tile in elem:
             board_colors.add(tile.color)
+    # If only one color is in the set, return True
     return len(board_colors) == 1
 
 def main():
@@ -167,10 +159,9 @@ def main():
                 board.selected_tile = board.board[row][col]
                 connected_tiles = find_connected(board.selected_tile,  board)
                 unique_colors = find_unique_colors(connected_tiles, board)
-                key_press, valid_move = get_key_press(unique_colors, connected_tiles, board)
-                if key_press == 'END_GAME':
-                    run = False
-                    break
+
+            if event.type == pygame.KEYDOWN:
+                key_press, valid_move = get_key_press(unique_colors, connected_tiles, chr(event.key), board)
                 if valid_move:
                     board.update_board(WIN, connected_tiles, key_press)
                     pygame.display.update()
@@ -183,6 +174,7 @@ def main():
                         player_1_wins += 1
                     else:
                         player_2_wins += 1
+                    # Recreate the board after someone wins
                     board.initialize_board(WIN)
                     pygame.display.update()
                 
