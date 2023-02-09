@@ -247,7 +247,8 @@ def main():
                     else:
                         player_2_wins += 1
                     # Recreate the board after someone wins
-                    time.sleep(1)
+                    # Uncomment this is you want more time after the game ends
+                    # time.sleep(1)
                     board.initialize_board(WIN)
                     board.selected_tile = board.board[0][0]
                     board.update_selected(WIN, board.selected_tile, board.selected_tile)
