@@ -5,7 +5,7 @@ from queue import LifoQueue
 from flag_coloring.constants import *
 from flag_coloring.board import Board
 from flag_coloring.tile import Tile
-
+from player2 import *
 # Frames per second for the window to update
 FPS = 60
 
@@ -170,10 +170,11 @@ def main():
     player_2_wins = 0
     # Create and initialize the board
     board = Board()
-    board.initialize_board(WIN)
+    board.initialize_board(WIN)    
     
-    
-    
+    player_choice = input("would you like player two to be a person (p) or an ai (a)?\n")
+    ai_player = False if player_choice == 'p' else True
+
     # Create a clock so the board runs at a constant FPS
     clock = pygame.time.Clock()
 
@@ -197,73 +198,85 @@ def main():
             if event.type == pygame.QUIT:
                 # Exit the game
                 run = False
-                
-            # Chooses the selected tile and evaluates neighbors
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                # Get the position of the mouse to calculate the row and col
-                pos = pygame.mouse.get_pos()
-                row, col = get_row_col_from_mouse(pos)
-                # Update the selected tile and the board accordingly, along with the new connected_tiles and unique colors
-                old_selected = board.selected_tile
-                board.selected_tile = board.board[row][col]
-                board.update_selected(WIN, old_selected, board.selected_tile)
-                pygame.display.update()
-                connected_tiles = find_connected(board.selected_tile, board)
-                unique_colors = find_unique_colors(connected_tiles, board)
-
-            # If a key is pressed, and a tile is selected a viable move is assessed
-            elif event.type == pygame.KEYDOWN:
-                key_press = event.key
-                # If the pressed key is an arrow key move the selected tile and update the connected_tiles and unique colors
-                if key_press == pygame.K_UP or key_press == pygame.K_DOWN or key_press == pygame.K_LEFT or key_press == pygame.K_RIGHT: 
-                    row, col = move_selected(key_press, board)
+            
+            #locks user input if an ai player is set to play
+            if not ai_player or (ai_player and player_1):
+                # Chooses the selected tile and evaluates neighbors
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # Get the position of the mouse to calculate the row and col
+                    pos = pygame.mouse.get_pos()
+                    row, col = get_row_col_from_mouse(pos)
+                    # Update the selected tile and the board accordingly, along with the new connected_tiles and unique colors
                     old_selected = board.selected_tile
                     board.selected_tile = board.board[row][col]
                     board.update_selected(WIN, old_selected, board.selected_tile)
+                    pygame.display.update()
                     connected_tiles = find_connected(board.selected_tile, board)
                     unique_colors = find_unique_colors(connected_tiles, board)
-                    pygame.display.update()
-                # If the key is anything else, again update the connected tiles and unique colors, but also check
-                # If the move would be a valid one (r, g, b, y, g, w, k)
-                else:
-                    connected_tiles = find_connected(board.selected_tile, board)
-                    unique_colors = find_unique_colors(connected_tiles, board)
-                    valid_move = is_valid_move(unique_colors, key_press)
-                # If the move is a valid move, then update the board accordingly
-                # This also redraws the select pointer on the new squares
-                if valid_move:
-                    board.update_board(WIN, connected_tiles, key_press)
-                    row, col = board.selected_tile.row, board.selected_tile.col
-                    board.update_selected(WIN, board.board[row][col], board.selected_tile)
-                    pygame.display.update()
+
+                # If a key is pressed, and a tile is selected a viable move is assessed
+                elif event.type == pygame.KEYDOWN:
+                    key_press = event.key
+                    # If the pressed key is an arrow key move the selected tile and update the connected_tiles and unique colors
+                    if key_press == pygame.K_UP or key_press == pygame.K_DOWN or key_press == pygame.K_LEFT or key_press == pygame.K_RIGHT: 
+                        row, col = move_selected(key_press, board)
+                        old_selected = board.selected_tile
+                        board.selected_tile = board.board[row][col]
+                        board.update_selected(WIN, old_selected, board.selected_tile)
+                        connected_tiles = find_connected(board.selected_tile, board)
+                        unique_colors = find_unique_colors(connected_tiles, board)
+                        pygame.display.update()
+                    # If the key is anything else, again update the connected tiles and unique colors, but also check
+                    # If the move would be a valid one (r, g, b, y, g, w, k)
+                    else:
+                        connected_tiles = find_connected(board.selected_tile, board)
+                        unique_colors = find_unique_colors(connected_tiles, board)
+                        valid_move = is_valid_move(unique_colors, key_press)
+                    # If the move is a valid move, then update the board accordingly
+                    # This also redraws the select pointer on the new squares
+            else:
+                row, col, key_press = get_move()
+                
+                old_selected = board.selected_tile
+                board.selected_tile = board.board[row][col]
+                board.update_selected(WIN, old_selected, board.selected_tile)
+                connected_tiles = find_connected(board.selected_tile, board)
+                unique_colors = find_unique_colors(connected_tiles, board)
+                valid_move = is_valid_move(unique_colors, key_press)   
+                pygame.display.update()
+                #add ai player
+            if valid_move:
+                board.update_board(WIN, connected_tiles, key_press)
+                row, col = board.selected_tile.row, board.selected_tile.col
+                board.update_selected(WIN, board.board[row][col], board.selected_tile)
+                pygame.display.update()
                     
                 
-                # Check for a winner
-                winner = is_winner(board)
-                # If a winner is found add the correct count and restart the board
-                if winner:
-                    if player_1:
-                        player_1_wins += 1
-                    else:
-                        player_2_wins += 1
-                    # Recreate the board after someone wins
-                    # Uncomment this is you want more time after the game ends
-                    # time.sleep(1)
-                    board.initialize_board(WIN)
-                    board.selected_tile = board.board[0][0]
-                    board.update_selected(WIN, board.selected_tile, board.selected_tile)
-                    pygame.display.update()
-                
-                # If a valid move is made, swap which players turn it is
-                if player_1 and valid_move:
-                    pygame.display.set_caption('Flag Coloring - Player 2s Turn')
-                    player_1 = False
-                    valid_move = False
-                elif not player_1 and valid_move:
-                    pygame.display.set_caption('Flag Coloring - Player 1s Turn')
-                    player_1 = True
-                    valid_move = False
-    
+            # Check for a winner
+            winner = is_winner(board)
+            # If a winner is found add the correct count and restart the board
+            if winner:
+                if player_1:
+                    player_1_wins += 1
+                else:
+                    player_2_wins += 1
+                # Recreate the board after someone wins
+                # Uncomment this is you want more time after the game ends
+                # time.sleep(1)
+                board.initialize_board(WIN)
+                board.selected_tile = board.board[0][0]
+                board.update_selected(WIN, board.selected_tile, board.selected_tile)
+                pygame.display.update()
+            
+            # If a valid move is made, swap which players turn it is
+            if player_1 and valid_move:
+                pygame.display.set_caption('Flag Coloring - Player 2s Turn')
+                player_1 = False
+                valid_move = False
+            elif not player_1 and valid_move:
+                pygame.display.set_caption('Flag Coloring - Player 1s Turn')
+                player_1 = True
+                valid_move = False    
     # Print the stats for the games
     print(f"There were {player_1_wins + player_2_wins} game(s) played\nPlayer 1 Won {player_1_wins} game(s)\nPlayer 2 Won {player_2_wins} game(s)")
         
