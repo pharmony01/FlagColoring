@@ -235,8 +235,8 @@ def main():
                     # If the move is a valid move, then update the board accordingly
                     # This also redraws the select pointer on the new squares
             else:
-                row, col, key_press = get_move()
                 
+                row, col, key_press = get_move(board)
                 old_selected = board.selected_tile
                 board.selected_tile = board.board[row][col]
                 board.update_selected(WIN, old_selected, board.selected_tile)
@@ -244,6 +244,13 @@ def main():
                 unique_colors = find_unique_colors(connected_tiles, board)
                 valid_move = is_valid_move(unique_colors, key_press)   
                 pygame.display.update()
+                
+                time.sleep(0.5) #just so you can see the choice it made
+
+                #if ai makes invalid choice throw an event to run the loop again...its dumb ik 
+                if not valid_move: pygame.event.post(pygame.event.Event(pygame.USEREVENT))
+
+                
                 #add ai player
             if valid_move:
                 board.update_board(WIN, connected_tiles, key_press)
