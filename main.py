@@ -1,11 +1,15 @@
 import pygame
 import time
 import pdb
+import argparse
 from queue import LifoQueue
 from flag_coloring.constants import *
 from flag_coloring.board import Board
 from flag_coloring.tile import Tile
 from player2 import *
+
+parser = argparse.ArgumentParser(description='configure Flag Coloring play setting')
+parser.add_argument('-p','--player', metavar='play', type=str,help='enter \'a \' to play an ai or \'p\' to play another person (default=p)', default='p')
 # Frames per second for the window to update
 FPS = 60
 
@@ -14,6 +18,140 @@ WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Flag Coloring - Player 1s Turn')
 
 # Get the row and column that the tile is in and reuturn them
+
+
+def main(args):
+    # For end stats
+    player_1_wins = 0
+    player_2_wins = 0
+    # Create and initialize the board
+    board = Board()
+    board.initialize_board(WIN)
+
+    #checks from args if the user wants player 2 to be the ai
+    ai_player = False if args.player == 'p' else True
+
+    # Create a clock so the board runs at a constant FPS
+    clock = pygame.time.Clock()
+
+    # Initialize variables
+    valid_move = False
+    board.selected_tile = board.board[0][0]
+    board.update_selected(WIN, board.selected_tile, board.selected_tile)
+    connected_tiles = find_connected(board.selected_tile, board)
+    unique_colors = find_unique_colors(connected_tiles, board)
+    pygame.display.update()
+
+    # Main game loop
+    run = True
+    player_1 = True
+    while run:
+        # Start the clock at 60 FPS
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            # If the player clicks the exit, then terminate the loop
+            if event.type == pygame.QUIT:
+                # Exit the game
+                run = False
+
+            # locks user input if an ai player is set to play
+            if not ai_player or (ai_player and player_1):
+                # Chooses the selected tile and evaluates neighbors
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # Get the position of the mouse to calculate the row and col
+                    pos = pygame.mouse.get_pos()
+                    row, col = get_row_col_from_mouse(pos)
+                    # Update the selected tile and the board accordingly, along with the new connected_tiles and unique colors
+                    old_selected = board.selected_tile
+                    board.selected_tile = board.board[row][col]
+                    board.update_selected(
+                        WIN, old_selected, board.selected_tile)
+                    pygame.display.update()
+                    connected_tiles = find_connected(
+                        board.selected_tile, board)
+                    unique_colors = find_unique_colors(connected_tiles, board)
+
+                # If a key is pressed, and a tile is selected a viable move is assessed
+                elif event.type == pygame.KEYDOWN:
+                    key_press = event.key
+                    # If the pressed key is an arrow key move the selected tile and update the connected_tiles and unique colors
+                    if key_press == pygame.K_UP or key_press == pygame.K_DOWN or key_press == pygame.K_LEFT or key_press == pygame.K_RIGHT:
+                        row, col = move_selected(key_press, board)
+                        old_selected = board.selected_tile
+                        board.selected_tile = board.board[row][col]
+                        board.update_selected(
+                            WIN, old_selected, board.selected_tile)
+                        connected_tiles = find_connected(
+                            board.selected_tile, board)
+                        unique_colors = find_unique_colors(
+                            connected_tiles, board)
+                        pygame.display.update()
+                    # If the key is anything else, again update the connected tiles and unique colors, but also check
+                    # If the move would be a valid one (r, g, b, y, g, w, k)
+                    else:
+                        connected_tiles = find_connected(
+                            board.selected_tile, board)
+                        unique_colors = find_unique_colors(
+                            connected_tiles, board)
+                        valid_move = is_valid_move(unique_colors, key_press)
+                    # If the move is a valid move, then update the board accordingly
+                    # This also redraws the select pointer on the new squares
+            else:
+
+                row, col, key_press = get_move(board)
+                old_selected = board.selected_tile
+                board.selected_tile = board.board[row][col]
+                board.update_selected(WIN, old_selected, board.selected_tile)
+                connected_tiles = find_connected(board.selected_tile, board)
+                unique_colors = find_unique_colors(connected_tiles, board)
+                valid_move = is_valid_move(unique_colors, key_press)
+                pygame.display.update()
+
+                time.sleep(0.5)  # just so you can see the choice it made
+
+                # if ai makes invalid choice throw an event to run the loop again...its dumb ik
+                if not valid_move:
+                    pygame.event.post(pygame.event.Event(pygame.USEREVENT))
+
+                # add ai player
+            if valid_move:
+                board.update_board(WIN, connected_tiles, key_press)
+                row, col = board.selected_tile.row, board.selected_tile.col
+                board.update_selected(
+                    WIN, board.board[row][col], board.selected_tile)
+                pygame.display.update()
+
+            # Check for a winner
+            winner = is_winner(board)
+            # If a winner is found add the correct count and restart the board
+            if winner:
+                if player_1:
+                    player_1_wins += 1
+                else:
+                    player_2_wins += 1
+                # Recreate the board after someone wins
+                # Uncomment this is you want more time after the game ends
+                # time.sleep(1)
+                board.initialize_board(WIN)
+                board.selected_tile = board.board[0][0]
+                board.update_selected(
+                    WIN, board.selected_tile, board.selected_tile)
+                pygame.display.update()
+
+            # If a valid move is made, swap which players turn it is
+            if player_1 and valid_move:
+                pygame.display.set_caption('Flag Coloring - Player 2s Turn')
+                player_1 = False
+                valid_move = False
+            elif not player_1 and valid_move:
+                pygame.display.set_caption('Flag Coloring - Player 1s Turn')
+                player_1 = True
+                valid_move = False
+    # Print the stats for the games
+    print(f"There were {player_1_wins + player_2_wins} game(s) played\nPlayer 1 Won {player_1_wins} game(s)\nPlayer 2 Won {player_2_wins} game(s)")
+
+
 def get_row_col_from_mouse(pos):
     x, y = pos
     row = y // SQUARE_SIZE
@@ -21,6 +159,8 @@ def get_row_col_from_mouse(pos):
     return row, col
 
 # Finds the tiles connected to your selected tile
+
+
 def find_connected(tile: Tile, board: Board):
     connected_tiles = set()
     stack = LifoQueue()
@@ -60,10 +200,12 @@ def find_connected(tile: Tile, board: Board):
             if checked_tile not in connected_tiles and checked_tile.color == start_tile.color:
                 stack.put(checked_tile)
                 connected_tiles.add(checked_tile)
-    
+
     return connected_tiles
-    
+
 # Finds the unique colors bordering the selected tile
+
+
 def find_unique_colors(connected_tiles, board: Board):
     # Create a set to eliminate duplicates
     unique_colors = set()
@@ -93,7 +235,8 @@ def find_unique_colors(connected_tiles, board: Board):
             if checked_color != selected_color:
                 unique_colors.add(checked_color)
     return unique_colors
-    
+
+
 def is_valid_move(unique_colors, key_press):
     key = ''
     if key_press == pygame.K_r:
@@ -131,7 +274,9 @@ def is_valid_move(unique_colors, key_press):
     else:
         return False
 
-# Check if someone has won the game        
+# Check if someone has won the game
+
+
 def is_winner(board: Board):
     # Add all colors on the board into a set
     board_colors = set()
@@ -140,6 +285,7 @@ def is_winner(board: Board):
             board_colors.add(tile.color)
     # If only one color is in the set, return True
     return len(board_colors) == 1
+
 
 def move_selected(key_press, board: Board):
     value = []
@@ -152,7 +298,7 @@ def move_selected(key_press, board: Board):
         value = [1, 0]
     elif key_press == pygame.K_RIGHT:
         value = [0, 1]
-    
+
     # Grab the values from the selected tile
     row, col = board.selected_tile.row, board.selected_tile.col
     # Adjust the row, col to the new one
@@ -164,128 +310,6 @@ def move_selected(key_press, board: Board):
     else:
         return board.selected_tile.row, board.selected_tile.col
 
-def main():
-    # For end stats
-    player_1_wins = 0
-    player_2_wins = 0
-    # Create and initialize the board
-    board = Board()
-    board.initialize_board(WIN)    
-    
-    player_choice = input("would you like player two to be a person (p) or an ai (a)?\n")
-    ai_player = False if player_choice == 'p' else True
 
-    # Create a clock so the board runs at a constant FPS
-    clock = pygame.time.Clock()
-
-    # Initialize variables
-    valid_move = False
-    board.selected_tile = board.board[0][0]
-    board.update_selected(WIN, board.selected_tile, board.selected_tile)
-    connected_tiles = find_connected(board.selected_tile, board)
-    unique_colors = find_unique_colors(connected_tiles, board)
-    pygame.display.update()
-    
-    # Main game loop
-    run = True
-    player_1 = True
-    while run:
-        # Start the clock at 60 FPS
-        clock.tick(FPS)
-        
-        for event in pygame.event.get():
-            # If the player clicks the exit, then terminate the loop
-            if event.type == pygame.QUIT:
-                # Exit the game
-                run = False
-            
-            #locks user input if an ai player is set to play
-            if not ai_player or (ai_player and player_1):
-                # Chooses the selected tile and evaluates neighbors
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    # Get the position of the mouse to calculate the row and col
-                    pos = pygame.mouse.get_pos()
-                    row, col = get_row_col_from_mouse(pos)
-                    # Update the selected tile and the board accordingly, along with the new connected_tiles and unique colors
-                    old_selected = board.selected_tile
-                    board.selected_tile = board.board[row][col]
-                    board.update_selected(WIN, old_selected, board.selected_tile)
-                    pygame.display.update()
-                    connected_tiles = find_connected(board.selected_tile, board)
-                    unique_colors = find_unique_colors(connected_tiles, board)
-
-                # If a key is pressed, and a tile is selected a viable move is assessed
-                elif event.type == pygame.KEYDOWN:
-                    key_press = event.key
-                    # If the pressed key is an arrow key move the selected tile and update the connected_tiles and unique colors
-                    if key_press == pygame.K_UP or key_press == pygame.K_DOWN or key_press == pygame.K_LEFT or key_press == pygame.K_RIGHT: 
-                        row, col = move_selected(key_press, board)
-                        old_selected = board.selected_tile
-                        board.selected_tile = board.board[row][col]
-                        board.update_selected(WIN, old_selected, board.selected_tile)
-                        connected_tiles = find_connected(board.selected_tile, board)
-                        unique_colors = find_unique_colors(connected_tiles, board)
-                        pygame.display.update()
-                    # If the key is anything else, again update the connected tiles and unique colors, but also check
-                    # If the move would be a valid one (r, g, b, y, g, w, k)
-                    else:
-                        connected_tiles = find_connected(board.selected_tile, board)
-                        unique_colors = find_unique_colors(connected_tiles, board)
-                        valid_move = is_valid_move(unique_colors, key_press)
-                    # If the move is a valid move, then update the board accordingly
-                    # This also redraws the select pointer on the new squares
-            else:
-                
-                row, col, key_press = get_move(board)
-                old_selected = board.selected_tile
-                board.selected_tile = board.board[row][col]
-                board.update_selected(WIN, old_selected, board.selected_tile)
-                connected_tiles = find_connected(board.selected_tile, board)
-                unique_colors = find_unique_colors(connected_tiles, board)
-                valid_move = is_valid_move(unique_colors, key_press)   
-                pygame.display.update()
-                
-                time.sleep(0.5) #just so you can see the choice it made
-
-                #if ai makes invalid choice throw an event to run the loop again...its dumb ik 
-                if not valid_move: pygame.event.post(pygame.event.Event(pygame.USEREVENT))
-
-                
-                #add ai player
-            if valid_move:
-                board.update_board(WIN, connected_tiles, key_press)
-                row, col = board.selected_tile.row, board.selected_tile.col
-                board.update_selected(WIN, board.board[row][col], board.selected_tile)
-                pygame.display.update()
-                    
-                
-            # Check for a winner
-            winner = is_winner(board)
-            # If a winner is found add the correct count and restart the board
-            if winner:
-                if player_1:
-                    player_1_wins += 1
-                else:
-                    player_2_wins += 1
-                # Recreate the board after someone wins
-                # Uncomment this is you want more time after the game ends
-                # time.sleep(1)
-                board.initialize_board(WIN)
-                board.selected_tile = board.board[0][0]
-                board.update_selected(WIN, board.selected_tile, board.selected_tile)
-                pygame.display.update()
-            
-            # If a valid move is made, swap which players turn it is
-            if player_1 and valid_move:
-                pygame.display.set_caption('Flag Coloring - Player 2s Turn')
-                player_1 = False
-                valid_move = False
-            elif not player_1 and valid_move:
-                pygame.display.set_caption('Flag Coloring - Player 1s Turn')
-                player_1 = True
-                valid_move = False    
-    # Print the stats for the games
-    print(f"There were {player_1_wins + player_2_wins} game(s) played\nPlayer 1 Won {player_1_wins} game(s)\nPlayer 2 Won {player_2_wins} game(s)")
-        
-
-main()
+if __name__ == '__main__':
+    main(parser.parse_args())
